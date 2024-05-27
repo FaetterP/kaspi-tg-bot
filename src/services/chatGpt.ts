@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { Logger } from "../utils";
 import fs from "node:fs";
 import fuzzy from "fuzzy";
+import { Product } from "./kaspi";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_TOKEN,
@@ -28,7 +29,7 @@ async function sendText(message: string) {
 
   const chatResponse = chatCompletion.choices[0].message.content;
   Logger.debug({ message, chatResponse });
-  return chatResponse;
+  return chatResponse!;
 }
 
 async function sendImage({
@@ -64,4 +65,34 @@ export async function predictCategoryFromImage(imageUrl: string) {
   const response = await sendImage({ message, imageUrl });
 
   const ar = fuzzy.filter(response!, categoriesCodes);
+}
+
+export async function extractAttributes(
+  text: string,
+  history: string[]
+): Promise<Product | string> {
+  const message = `Твоя задача - достать атрибуты из сообщения. Пользователь сказал вот это: "${text}". До этого он говорил ${
+    history.length ? history.reduce((a, b) => `${a}\n${b}`) : "ничего"
+  }. \n\nЕсли у тебя все данные есть, пришли ТОЛЬКО заполненный json и не пиши больше ничего. Json обязан соблюдать тип {
+    sku: string;
+    title: string;
+    brand: string;
+    category: string;
+    description: string;
+    attributes: {
+      code: string;
+      value: string;
+    }[];
+    images: {
+      url: string;
+    }[];
+  }
+   Если пользователь что-то не назвал, обычным языком попроси его указать недостающие поля.`;
+  const response = await sendText(message);
+
+  try {
+    return JSON.parse(response) as Product;
+  } catch {
+    return response;
+  }
 }

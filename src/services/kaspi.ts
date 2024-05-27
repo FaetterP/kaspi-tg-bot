@@ -15,7 +15,7 @@ interface ProductAttribute {
 
 interface ProductAttributeResponse extends Array<ProductAttribute> {}
 
-interface Product {
+export interface Product {
   sku: string;
   title: string;
   brand: string;
@@ -36,7 +36,7 @@ interface ImportProductResponse {
 }
 
 // https://guide.kaspi.kz/partner/ru/shop/api/goods/q3217
-async function getProductAttributes(
+export async function getProductAttributes(
   categoryCode: string
 ): Promise<ProductAttributeResponse> {
   try {
@@ -56,9 +56,8 @@ async function getProductAttributes(
 }
 
 // https://guide.kaspi.kz/partner/ru/shop/api/goods/q3219
-async function importProducts(
+export async function importProducts(
   products: Product[],
-  apiKey: string
 ): Promise<ImportProductResponse> {
   try {
     const response = await instance.post<ImportProductResponse>(
