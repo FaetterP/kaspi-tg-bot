@@ -6,7 +6,7 @@ const instance = axios.create({
   headers: { "X-Auth-Token": process.env.KASPI_TOKEN },
 });
 
-interface ProductAttribute {
+export interface ProductAttribute {
   code: string;
   type: "boolean" | "enum" | "string" | "number";
   multiValued: boolean;
@@ -57,8 +57,9 @@ export async function getProductAttributes(
 
 // https://guide.kaspi.kz/partner/ru/shop/api/goods/q3219
 export async function importProducts(
-  products: Product[],
+  products: Product[]
 ): Promise<ImportProductResponse> {
+  return { code: "", status: "" };
   try {
     const response = await instance.post<ImportProductResponse>(
       "/products/import",

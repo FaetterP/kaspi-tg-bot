@@ -1,11 +1,18 @@
-import redis from "redis";
+import { createClient } from "redis";
 import { Logger } from "../utils";
+import { RedisClientType } from "@redis/client";
+import { ProductAttribute } from "./kaspi";
 
-const client = redis.createClient();
+const client = createClient();
 
 client.on("error", (err) => {
   Logger.error({ err }, "Redis error");
 });
+
+export async function connectRedis() {
+  await client.connect();
+  Logger.info({}, "Connected to redis");
+}
 
 export async function setUserStep(userId: number, step: string) {
   await client.set(`user:${userId}:step`, step);
@@ -16,7 +23,22 @@ export async function getUserStep(userId: number) {
   return step;
 }
 
-export async function pushMessage(userId: number, message: string): Promise<void> {
+export async function setUserAttributes(
+  userId: number,
+  attributes: ProductAttribute[]
+) {
+  await client.set(`user:${userId}:attributes`, JSON.stringify(attributes));
+}
+
+export async function getUserAttributes(userId: number) {
+  const attributes = await client.get(`user:${userId}:attributes`);
+  return JSON.parse(attributes || "[]") as ProductAttribute[];
+}
+
+export async function pushMessage(
+  userId: number,
+  message: string
+): Promise<void> {
   const key = `${userId}:history`;
   await client.lPush(key, message);
 }

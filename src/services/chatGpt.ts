@@ -2,11 +2,15 @@ import OpenAI from "openai";
 import { Logger } from "../utils";
 import fs from "node:fs";
 import fuzzy from "fuzzy";
-import { Product } from "./kaspi";
+import { Product, ProductAttribute } from "./kaspi";
+import "dotenv/config";
 
-const openai = new OpenAI({
+let openai = new OpenAI({
   apiKey: process.env.OPENAI_TOKEN,
 });
+export function connectOpenAI() {
+  Logger.info({}, "Connected to OpenAI");
+}
 
 const a = openai.files.create({
   file: fs.createReadStream("categories.json"),
@@ -69,24 +73,16 @@ export async function predictCategoryFromImage(imageUrl: string) {
 
 export async function extractAttributes(
   text: string,
-  history: string[]
+  history: string[],
+  attributes: ProductAttribute[]
 ): Promise<Product | string> {
   const message = `Твоя задача - достать атрибуты из сообщения. Пользователь сказал вот это: "${text}". До этого он говорил ${
     history.length ? history.reduce((a, b) => `${a}\n${b}`) : "ничего"
-  }. \n\nЕсли у тебя все данные есть, пришли ТОЛЬКО заполненный json и не пиши больше ничего. Json обязан соблюдать тип {
-    sku: string;
-    title: string;
-    brand: string;
-    category: string;
-    description: string;
-    attributes: {
-      code: string;
-      value: string;
-    }[];
-    images: {
-      url: string;
-    }[];
-  }
+  }. \n\n Вот список всех полей: ${JSON.stringify(attributes).replaceAll(
+    '"',
+    ""
+  )}. Если у тебя все данные есть, пришли ТОЛЬКО заполненный json и не пиши больше ничего. Json обязан соблюдать тип 
+  { sku: string; title: string; brand: string; category: string; description: string; attributes: { code: string; value: string; }[]; images: { url: string; }[]; }
    Если пользователь что-то не назвал, обычным языком попроси его указать недостающие поля.`;
   const response = await sendText(message);
 
