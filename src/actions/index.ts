@@ -4,7 +4,7 @@ import { image } from "./image";
 import { category } from "./category";
 import { start } from "./start";
 
-type StepHandler = (msg: TelegramBot.Message, history: string[]) => Promise<void>;
+type StepHandler = (msg: TelegramBot.Message, bot:TelegramBot) => Promise<void>;
 
 export const stepMapper: Record<string, StepHandler> = {
   attributes,

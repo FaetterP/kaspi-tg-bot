@@ -15,6 +15,7 @@ export async function connectRedis() {
 }
 
 export async function setUserStep(userId: number, step: string) {
+  Logger.debug({ step }, "Change step");
   await client.set(`user:${userId}:step`, step);
 }
 

@@ -12,11 +12,6 @@ export function connectOpenAI() {
   Logger.info({}, "Connected to OpenAI");
 }
 
-const a = openai.files.create({
-  file: fs.createReadStream("categories.json"),
-  purpose: "fine-tune",
-});
-
 const categories = JSON.parse(
   fs.readFileSync("categories.json", { encoding: "utf-8" })
 ) as {
@@ -62,13 +57,11 @@ async function sendImage({
 }
 
 export async function predictCategoryFromImage(imageUrl: string) {
-  console.log({ a: await a });
-  const message = `Твоя задача - однозначно определить тип товара на изображении. Дай в ответе ТОЛЬКО категорию и ничего больше. Для определения типа используй этот файл ${JSON.stringify(
-    await a
-  )}`;
+  const message = `Твоя задача - однозначно определить тип товара на изображении. Дай в ответе ТОЛЬКО категорию и ничего больше. Для определения категории прочитай этот файл, в нём перечислены все доступные категории ${process.env.CATEGORIES_URL} Можешь использовать не весь файл. Дай ответ именно такой как поле code в этом файле.`;
   const response = await sendImage({ message, imageUrl });
 
   const ar = fuzzy.filter(response!, categoriesCodes);
+  return ar.map((a) => a.original);
 }
 
 export async function extractAttributes(
@@ -78,11 +71,11 @@ export async function extractAttributes(
 ): Promise<Product | string> {
   const message = `Твоя задача - достать атрибуты из сообщения. Пользователь сказал вот это: "${text}". До этого он говорил ${
     history.length ? history.reduce((a, b) => `${a}\n${b}`) : "ничего"
-  }. \n\n Вот список всех полей: ${JSON.stringify(attributes).replaceAll(
+  }. \n\n Вот список всех полей: ${JSON.stringify(attributes[0]).replaceAll(
     '"',
     ""
   )}. Если у тебя все данные есть, пришли ТОЛЬКО заполненный json и не пиши больше ничего. Json обязан соблюдать тип 
-  { sku: string; title: string; brand: string; category: string; description: string; attributes: { code: string; value: string; }[]; images: { url: string; }[]; }
+  { sku?: string; title: string; brand?: string; category: string; description?: string; attributes: { code: string; value: string; }[]; images?: { url: string; }[]; }
    Если пользователь что-то не назвал, обычным языком попроси его указать недостающие поля.`;
   const response = await sendText(message);
 
@@ -91,4 +84,13 @@ export async function extractAttributes(
   } catch {
     return response;
   }
+}
+
+export async function formatAttributesJson(attributes: ProductAttribute[]) {
+  const message = `Ты сейчас получишь json объект. Твоя задача - достать из него данные и оформить их в виде обычного читабельного текста. Скажи, что пользователь должен заполнить. \n${JSON.stringify(
+    attributes
+  )}`;
+  const response = await sendText(message);
+
+  return response;
 }

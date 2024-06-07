@@ -59,7 +59,8 @@ export async function getProductAttributes(
 export async function importProducts(
   products: Product[]
 ): Promise<ImportProductResponse> {
-  return { code: "", status: "" };
+  Logger.debug({products}, "Upload to kaspi")
+  return { code: "testcode", status: "teststatus" };
   try {
     const response = await instance.post<ImportProductResponse>(
       "/products/import",
