@@ -1,15 +1,23 @@
 import TelegramBot from "node-telegram-bot-api";
 import { setUserStep } from "../services/redis";
-import { bot } from "..";
+import { predictCategoryFromImage } from "../services/chatGpt";
+import { Logger } from "../utils";
 
 export async function image(
   msg: TelegramBot.Message,
-  history: string[]
+  bot: TelegramBot
 ): Promise<void> {
-  await setUserStep(msg.chat.id, "category");
+  const cat = await predictCategoryFromImage(
+    await bot.getFileLink(msg.photo![0].file_id)
+  );
+  Logger.debug({ cat }, "Predicted category");
 
   await bot.sendMessage(
     msg.chat.id,
-    "Вот список категорий: todo. Введите нужную."
+    `Вот список категорий:\n\n${cat.reduce(
+      (a, b) => `${a}\n${b}`
+    )}\n\n Введите нужную.`
   );
+
+  await setUserStep(msg.chat.id, "category");
 }

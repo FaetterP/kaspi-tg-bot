@@ -15,6 +15,7 @@ export async function connectRedis() {
 }
 
 export async function setUserStep(userId: number, step: string) {
+  Logger.debug({ step }, "Change step");
   await client.set(`user:${userId}:step`, step);
 }
 
@@ -52,4 +53,14 @@ export async function getMessages(userId: number): Promise<string[]> {
 export async function clearMessages(userId: number): Promise<void> {
   const key = `${userId}:history`;
   await client.del(key);
+}
+
+export async function setCategory(userId: number, category: string) {
+  Logger.debug({ step: category }, "Change category");
+  await client.set(`user:${userId}:category`, category);
+}
+
+export async function getCategory(userId: number) {
+  const category = await client.get(`user:${userId}:category`);
+  return category!;
 }
